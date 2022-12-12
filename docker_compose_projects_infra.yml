@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+
+  # Registry for docker images that allows to push, store and pull images
+  container_registry:
+    container_name: registry
+    image: registry
+    ports:
+      - "5000:5000"
+    # TODO Implement storing images in S3 (or alternative storage)
+
+  # Consul - service networking solution to automate network configurations,
+  # discover services, and enable secure connectivity across any cloud or runtime
+  consul:
+    container_name: consul
+    image: consul
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    # TODO Implement persistent storage for all configs
+
+  # Vault - identity-based secrets and encryption management system
+  vault:
+    container_name: vault
+    image: vault
+    ports:
+      - "8200:8200"
+    # TODO Implement persistent storage for all secrets
