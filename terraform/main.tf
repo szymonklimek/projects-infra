@@ -3,7 +3,7 @@ terraform {
     organization = "dev-platform"
 
     workspaces {
-      name = "projects-infra"
+      name = "projects-manager"
     }
   }
 
