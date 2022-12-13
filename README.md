@@ -18,4 +18,4 @@ self-hosting the tools with minimum resources.
 [Docker Registry](https://docs.docker.com/registry/), 
 [Consul](https://www.consul.io/),
 [Vault](https://www.vaultproject.io/)
-
+* [Terraform directory](terraform) defining resources necessary to run infrastructure
