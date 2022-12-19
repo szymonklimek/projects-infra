@@ -129,3 +129,47 @@ resource "aws_instance" "projects_infra_server" {
     Name = "projects-infra"
   }
 }
+
+resource "aws_security_group" "vpn_security_group" {
+  name        = "vpn_security_group"
+  description = "Allow http and ssh traffic"
+
+  // Open default ssh port
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  // Open OpenVPN port
+  ingress {
+    from_port   = 1194
+    to_port     = 1194
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "projects-infra"
+  }
+}
+
+resource "aws_instance" "projects_infra_vpn" {
+  ami           = data.aws_ami.latest_ubuntu.id
+  instance_type = "t3.nano"
+
+  key_name               = aws_key_pair.projects_manager_key_pair.key_name
+  vpc_security_group_ids = [aws_security_group.allow_traffic.id]
+
+  tags = {
+    Name = "projects-infra"
+  }
+}
