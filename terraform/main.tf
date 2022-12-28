@@ -150,6 +150,14 @@ resource "aws_security_group" "vpn_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  // Open OpenVPN port
+  ingress {
+    from_port   = 1194
+    to_port     = 1194
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -167,7 +175,7 @@ resource "aws_instance" "projects_infra_vpn" {
   instance_type = "t3.nano"
 
   key_name               = aws_key_pair.projects_manager_key_pair.key_name
-  vpc_security_group_ids = [aws_security_group.allow_traffic.id]
+  vpc_security_group_ids = [aws_security_group.vpn_security_group.id]
 
   tags = {
     Name = "projects-infra"
