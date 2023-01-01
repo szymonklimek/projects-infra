@@ -1,27 +1,3 @@
-terraform {
-  backend "remote" {
-    organization = "dev-platform"
-
-    workspaces {
-      name = "projects-manager"
-    }
-  }
-
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 3.27"
-    }
-  }
-
-  required_version = ">= 0.14.9"
-}
-
-provider "aws" {
-  profile = "default"
-  region  = "eu-central-1"
-}
-
 data "aws_ami" "latest_ubuntu" {
   most_recent = true
   owners      = ["099720109477"]
@@ -100,13 +76,9 @@ resource "aws_security_group" "allow_traffic" {
   }
 
   tags = {
-    Name = "projects-infra"
+    project     = var.project_name
+    environment = var.environment
   }
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key"
-  type        = string
 }
 
 resource "aws_key_pair" "projects_manager_key_pair" {
@@ -114,7 +86,8 @@ resource "aws_key_pair" "projects_manager_key_pair" {
   public_key = var.ssh_public_key
 
   tags = {
-    Name = "projects-infra"
+    project     = var.project_name
+    environment = var.environment
   }
 }
 
@@ -122,10 +95,11 @@ resource "aws_instance" "projects_infra_server" {
   ami           = data.aws_ami.latest_ubuntu.id
   instance_type = "t3.nano"
 
-  key_name = aws_key_pair.projects_manager_key_pair.key_name
+  key_name               = aws_key_pair.projects_manager_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.allow_traffic.id]
 
   tags = {
-    Name = "projects-infra"
+    project     = var.project_name
+    environment = var.environment
   }
 }
