@@ -81,8 +81,8 @@ resource "aws_security_group" "allow_traffic" {
   }
 }
 
-resource "aws_key_pair" "projects_manager_key_pair" {
-  key_name   = "projects_manager_key"
+resource "aws_key_pair" "ssh_key_pair" {
+  key_name   = "${var.project_name}_key_pair"
   public_key = var.ssh_public_key
 
   tags = {
@@ -95,7 +95,7 @@ resource "aws_instance" "projects_infra_server" {
   ami           = data.aws_ami.latest_ubuntu.id
   instance_type = "t3.nano"
 
-  key_name               = aws_key_pair.projects_manager_key_pair.key_name
+  key_name               = aws_key_pair.ssh_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.allow_traffic.id]
 
   tags = {
