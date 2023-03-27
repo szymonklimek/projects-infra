@@ -74,7 +74,7 @@ val extractVpnServerUrl by tasks.registering {
                 .find { with(it as Map<*, *>) { this["type"] == "aws_eip" && this["name"] == "vpn_nat" } }
                 .let { it as Map<*, *> }
                 .let { it["values"] as Map<*, *> }
-        val publicUrl = serverInfo["public_dns"]
+        val publicUrl = serverInfo["public_ip"]
 
         File(vpnServerDataFilePath)
             .printWriter()

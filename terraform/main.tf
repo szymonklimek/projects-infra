@@ -56,3 +56,12 @@ resource "aws_route_table_association" "private" {
   subnet_id      = module.network.private_subnet.id
   route_table_id = aws_route_table.private.id
 }
+
+resource "cloudflare_record" "public" {
+  zone_id         = var.infrastructure_cloudflare_zone_id
+  name            = "public"
+  value           = aws_eip.public.public_ip
+  type            = "A"
+  proxied         = true
+  allow_overwrite = true
+}
