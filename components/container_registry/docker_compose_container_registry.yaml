@@ -1,0 +1,10 @@
+version: '3.3'
+
+services:
+
+  # Registry for docker images that allows to push, store and pull images
+  container_registry:
+    container_name: registry
+    image: registry
+    ports:
+      - "5000:5000"

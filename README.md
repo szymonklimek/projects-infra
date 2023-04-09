@@ -13,10 +13,8 @@ self-hosting the tools with minimum resources.
 
 ## Contents
 
-* Docker compose file ([docker_compose_projects_infra.yaml](docker_compose_projects_infra.yml))
- defining applications to run: 
-[Docker Registry](https://docs.docker.com/registry/), 
-[Consul](https://www.consul.io/),
-[Vault](https://www.vaultproject.io/)
 * [Terraform directory](terraform) defining resources necessary to run infrastructure
-* [OpenVPN directory](components/openvpn) containing setup files for Open VPN server
+* [Components directory](components) containing applications or infrastructure components such as:
+  * [Docker Registry](https://docs.docker.com/registry/)
+  * [Consul](https://www.consul.io/)
+  * [OpenVPN directory](components/openvpn) containing setup files for Open VPN server
