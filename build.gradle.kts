@@ -8,6 +8,8 @@ val infrastructureDirectoryPath = rootDir.path + File.separator + "terraform"
 val infrastructureDataFilePath = buildDir.path + File.separator + "infrastructure_state.json"
 val componentsDirectoryPath = rootDir.path + File.separator + "components"
 val vpnServerDataFilePath = buildDir.path + File.separator + "vpn_server_data"
+val privateInstanceDataFilePath = buildDir.path + File.separator + "private_instance_data"
+val publicInstanceDataFilePath = buildDir.path + File.separator + "public_instance_data"
 val openVpnDirectoryPath = componentsDirectoryPath + File.separator + "openvpn"
 val openVpnSetupDirectoryName = "openvpn_setup"
 val openVpnSetupFileDataPath = buildDir.path + File.separator + "openvpn_status"
@@ -184,6 +186,120 @@ val createVpnClient by tasks.registering {
             args(
                 *sshArgs,
                 "$vpnServerUser@$host:/etc/openvpn/clients/$clientName.ovpn", openVpnClientCredentialsFilePath
+            )
+        }
+    }
+}
+
+// endregion
+
+// region Instances setup
+
+val extractPublicInstanceUrl by tasks.registering {
+    group = "instances setup"
+    description = "Extract public instance ip address"
+    inputs.files(deployInfrastructure.get().outputs.files)
+    outputs.file(publicInstanceDataFilePath)
+
+    doLast {
+        val serverInfo =
+            (JsonSlurper()
+                .parseText(File(infrastructureDataFilePath).reader().readText()) as Map<*, *>)
+                .let { it["values"] as Map<*, *> }
+                .let { it["root_module"] as Map<*, *> }
+                .let { it["resources"] as List<*> }
+                .find { with(it as Map<*, *>) { this["type"] == "aws_instance" && this["name"] == "public" } }
+                .let { it as Map<*, *> }
+                .let { it["values"] as Map<*, *> }
+        val publicUrl = serverInfo["private_ip"]
+
+        File(publicInstanceDataFilePath)
+            .printWriter()
+            .use { it.print(publicUrl) }
+    }
+}
+
+val extractPrivateInstanceUrl by tasks.registering {
+    group = "instances setup"
+    description = "Extract private instance ip address"
+    inputs.files(deployInfrastructure.get().outputs.files)
+    outputs.file(privateInstanceDataFilePath)
+
+    doLast {
+        val serverInfo =
+            (JsonSlurper()
+                .parseText(File(infrastructureDataFilePath).reader().readText()) as Map<*, *>)
+                .let { it["values"] as Map<*, *> }
+                .let { it["root_module"] as Map<*, *> }
+                .let { it["resources"] as List<*> }
+                .find { with(it as Map<*, *>) { this["type"] == "aws_instance" && this["name"] == "private" } }
+                .let { it as Map<*, *> }
+                .let { it["values"] as Map<*, *> }
+        val publicUrl = serverInfo["private_ip"]
+
+        File(privateInstanceDataFilePath)
+            .printWriter()
+            .use { it.print(publicUrl) }
+    }
+}
+
+val installDockerPublicInstance by tasks.registering {
+    group = "instances setup"
+    description = "Install docker on public instance"
+    inputs.files(publicInstanceDataFilePath)
+
+    dependsOn(extractPublicInstanceUrl)
+
+    doLast {
+        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
+        exec {
+            // Push docker installation script to remote host
+            commandLine("scp")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "scripts${File.separator}install_docker.sh",
+                "$host:~"
+            )
+        }
+        exec {
+            // Execute docker installation script on remote host
+            commandLine("ssh")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                host, "sh ~/install_docker.sh"
+            )
+        }
+    }
+}
+
+val installDockerPrivateInstance by tasks.registering {
+    group = "instances setup"
+    description = "Install docker on private instance"
+    inputs.files(privateInstanceDataFilePath)
+
+    dependsOn(extractPrivateInstanceUrl)
+
+    doLast {
+        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
+        exec {
+            // Push docker installation script to remote host
+            commandLine("scp")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "scripts${File.separator}install_docker.sh",
+                "$host:~"
+            )
+        }
+        exec {
+            // Execute docker installation script on remote host
+            commandLine("ssh")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                host, "sh ~/install_docker.sh"
             )
         }
     }
