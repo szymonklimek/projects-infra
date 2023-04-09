@@ -51,6 +51,7 @@ resource "aws_instance" "public" {
   associate_public_ip_address = true
   instance_type               = "t3.nano"
   subnet_id                   = module.network.public_subnet.id
+  private_ip                  = local.public_server_ip
 
   key_name = aws_key_pair.ssh_key_pair.key_name
 
