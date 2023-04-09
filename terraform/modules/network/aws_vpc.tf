@@ -24,9 +24,10 @@ resource "aws_route" "public_internet" {
 }
 
 resource "aws_subnet" "public_subnet" {
-  tags       = merge(var.tags, { Name = "${var.vpc_name}_public" })
-  vpc_id     = aws_vpc.vpc.id
-  cidr_block = "10.0.0.0/24" /* Range: 10.0.0.0 - 10.0.0.255 Total: 256 */
+  tags              = merge(var.tags, { Name = "${var.vpc_name}_public" })
+  vpc_id            = aws_vpc.vpc.id
+  availability_zone = var.availability_zone
+  cidr_block        = "10.0.0.0/24" /* Range: 10.0.0.0 - 10.0.0.255 Total: 256 */
 }
 
 resource "aws_route_table_association" "public" {
@@ -35,7 +36,8 @@ resource "aws_route_table_association" "public" {
 }
 
 resource "aws_subnet" "private_subnet" {
-  tags       = merge(var.tags, { Name = "${var.vpc_name}_private" })
-  vpc_id     = aws_vpc.vpc.id
-  cidr_block = "10.0.1.0/24" /* Range: 10.0.1.0 - 10.0.1.255 Total: 256 */
+  tags              = merge(var.tags, { Name = "${var.vpc_name}_private" })
+  vpc_id            = aws_vpc.vpc.id
+  availability_zone = var.availability_zone
+  cidr_block        = "10.0.1.0/24" /* Range: 10.0.1.0 - 10.0.1.255 Total: 256 */
 }

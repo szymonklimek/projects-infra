@@ -3,6 +3,12 @@ variable "vpc_name" {
   type        = string
 }
 
+variable "availability_zone" {
+  description = "Availability zone"
+  type        = string
+  default     = "eu-central-1a"
+}
+
 variable "tags" {
   description = "Tags"
   type        = map(string)
