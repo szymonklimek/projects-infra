@@ -6,8 +6,9 @@ import java.io.ByteArrayOutputStream
 
 val infrastructureDirectoryPath = rootDir.path + File.separator + "terraform"
 val infrastructureDataFilePath = buildDir.path + File.separator + "infrastructure_state.json"
+val componentsDirectoryPath = rootDir.path + File.separator + "components"
 val vpnServerDataFilePath = buildDir.path + File.separator + "vpn_server_data"
-val openVpnDirectoryPath = rootDir.path + File.separator + "openvpn"
+val openVpnDirectoryPath = componentsDirectoryPath + File.separator + "openvpn"
 val openVpnSetupDirectoryName = "openvpn_setup"
 val openVpnSetupFileDataPath = buildDir.path + File.separator + "openvpn_status"
 val vpnServerUser = "ubuntu"
@@ -92,7 +93,7 @@ val pushVpnSetup by tasks.registering {
 
         // Push installation scripts onto the server
         exec {
-            workingDir = File("openvpn")
+            workingDir = File(openVpnDirectoryPath)
             commandLine("scp")
             args(
                 *sshArgs,

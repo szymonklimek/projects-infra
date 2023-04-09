@@ -19,4 +19,4 @@ self-hosting the tools with minimum resources.
 [Consul](https://www.consul.io/),
 [Vault](https://www.vaultproject.io/)
 * [Terraform directory](terraform) defining resources necessary to run infrastructure
-* [OpenVPN directory](openvpn) containing setup files for Open VPN server
+* [OpenVPN directory](components/openvpn) containing setup files for Open VPN server
