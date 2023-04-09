@@ -305,6 +305,68 @@ val installDockerPrivateInstance by tasks.registering {
     }
 }
 
+val runPortainerPublicInstance by tasks.registering {
+    group = "instances setup"
+    description = "Install portainer on public instance"
+    inputs.files(publicInstanceDataFilePath)
+
+    dependsOn(extractPublicInstanceUrl)
+
+    doLast {
+        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
+        exec {
+            // Push docker installation script to remote host
+            commandLine("scp")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "scripts${File.separator}run_portainer.sh",
+                "$host:~"
+            )
+        }
+        exec {
+            // Execute docker installation script on remote host
+            commandLine("ssh")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                host, "sh ~/run_portainer.sh"
+            )
+        }
+    }
+}
+
+val runPortainerPrivateInstance by tasks.registering {
+    group = "instances setup"
+    description = "Install portainer on private instance"
+    inputs.files(privateInstanceDataFilePath)
+
+    dependsOn(extractPrivateInstanceUrl)
+
+    doLast {
+        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
+        exec {
+            // Push docker installation script to remote host
+            commandLine("scp")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                "scripts${File.separator}run_portainer.sh",
+                "$host:~"
+            )
+        }
+        exec {
+            // Execute docker installation script on remote host
+            commandLine("ssh")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                host, "sh ~/run_portainer.sh"
+            )
+        }
+    }
+}
+
 // endregion
 
 // region Helpers
