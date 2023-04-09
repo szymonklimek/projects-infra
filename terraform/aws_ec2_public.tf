@@ -25,10 +25,10 @@ resource "aws_security_group" "public" {
   }
 
   ingress {
-    description = "Allow inbound SSH access from the internet"
-    from_port   = 22
-    protocol    = "tcp"
-    to_port     = 22
+    description = "Allow traffic from servers in the public subnet"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
     cidr_blocks = [module.network.public_subnet.cidr_block]
   }
 
