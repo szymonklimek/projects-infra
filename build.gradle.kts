@@ -367,6 +367,29 @@ val runPortainerPrivateInstance by tasks.registering {
     }
 }
 
+val containerRegistrySetup by tasks.registering {
+    group = "instances setup"
+    description = "Set up container registry"
+    inputs.files(privateInstanceDataFilePath)
+    inputs.files(publicInstanceDataFilePath)
+
+    dependsOn(extractPublicInstanceUrl)
+
+    doLast {
+        val privateInstanceUrl = File(privateInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
+        exec {
+            // Execute docker installation script on remote host
+            commandLine("ssh")
+            args(
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                host, "sudo sh -c \"echo '{\\\"insecure-registries\\\" : [\\\"http://$privateInstanceUrl:5000\\\"]}' > /etc/docker/daemon.json\""
+            )
+        }
+    }
+}
+
 // endregion
 
 // region Helpers
