@@ -18,3 +18,4 @@ self-hosting the tools with minimum resources.
   * [Docker Registry](https://docs.docker.com/registry/)
   * [Consul](https://www.consul.io/)
   * [OpenVPN directory](components/openvpn) containing setup files for Open VPN server
+  * [Observability directory](components/observability) containing configuration for observability components
