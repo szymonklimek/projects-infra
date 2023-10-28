@@ -2,6 +2,14 @@ import groovy.json.JsonSlurper
 import org.apache.tools.ant.util.TeeOutputStream
 import java.io.ByteArrayOutputStream
 
+buildscript {
+    project.extra.set("scm.commit.hash",
+        Runtime.getRuntime().exec("git rev-parse --verify --short HEAD").apply { waitFor() }
+            .inputStream.reader().readText().replace("\n", "")
+    )
+}
+
+
 // region Paths, directories and file names
 
 val infrastructureDirectoryPath = rootDir.path + File.separator + "terraform"
