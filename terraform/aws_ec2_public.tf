@@ -14,6 +14,7 @@ resource "aws_security_group" "public" {
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   ingress {
@@ -22,6 +23,7 @@ resource "aws_security_group" "public" {
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   ingress {
@@ -29,7 +31,8 @@ resource "aws_security_group" "public" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = [module.network.public_subnet.cidr_block]
+#    cidr_blocks = [module.network.public_subnet.cidr_block]
+    ipv6_cidr_blocks = [module.network.public_subnet.ipv6_cidr_block]
   }
 
   egress {

@@ -12,12 +12,14 @@ resource "aws_security_group" "private" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-    cidr_blocks = [module.network.public_subnet.cidr_block]
+#    cidr_blocks = [module.network.public_subnet.cidr_block]
+    ipv6_cidr_blocks = [module.network.public_subnet.ipv6_cidr_block]
   }
 
   ingress {
     description = "Allow ping from public subnet"
-    cidr_blocks = [module.network.public_subnet.cidr_block]
+#    cidr_blocks = [module.network.public_subnet.cidr_block]
+    ipv6_cidr_blocks = [module.network.public_subnet.ipv6_cidr_block]
     from_port   = 8
     to_port     = 0
     protocol    = "icmp"

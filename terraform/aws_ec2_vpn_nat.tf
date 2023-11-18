@@ -8,6 +8,7 @@ resource "aws_security_group" "vpn_nat" {
     protocol    = "tcp"
     to_port     = 22
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   ingress {
@@ -16,6 +17,7 @@ resource "aws_security_group" "vpn_nat" {
     to_port     = 0
     protocol    = "icmp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   ingress {
@@ -23,7 +25,8 @@ resource "aws_security_group" "vpn_nat" {
     from_port   = 80
     protocol    = "tcp"
     to_port     = 80
-    cidr_blocks = [module.network.private_subnet.cidr_block]
+#    cidr_blocks = [module.network.private_subnet.cidr_block]
+    ipv6_cidr_blocks = [module.network.private_subnet.ipv6_cidr_block]
   }
 
   ingress {
@@ -31,7 +34,8 @@ resource "aws_security_group" "vpn_nat" {
     from_port   = 443
     protocol    = "tcp"
     to_port     = 443
-    cidr_blocks = [module.network.private_subnet.cidr_block]
+#    cidr_blocks = [module.network.private_subnet.cidr_block]
+    ipv6_cidr_blocks = [module.network.private_subnet.ipv6_cidr_block]
   }
 
   ingress {
@@ -40,6 +44,7 @@ resource "aws_security_group" "vpn_nat" {
     protocol    = "udp"
     to_port     = 1194
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 
   egress {

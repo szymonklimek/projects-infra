@@ -8,6 +8,7 @@ resource "aws_security_group" "allow_inbound_ssh" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
 
@@ -20,6 +21,7 @@ resource "aws_security_group" "allow_internal_ssh" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [aws_subnet.public_subnet.cidr_block]
+#    cidr_blocks = [aws_subnet.public_subnet.cidr_block]
+    ipv6_cidr_blocks = [aws_subnet.public_subnet.ipv6_cidr_block]
   }
 }
