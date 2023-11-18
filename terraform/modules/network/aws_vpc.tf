@@ -1,10 +1,11 @@
 resource "aws_vpc" "vpc" {
   tags = merge(var.tags, { Name = var.vpc_name })
 
-  cidr_block           = "10.0.0.0/16"
-  instance_tenancy     = "default"
-  enable_dns_support   = "true"
-  enable_dns_hostnames = "true"
+  cidr_block                       = "10.0.0.0/16"
+  assign_generated_ipv6_cidr_block = true
+  instance_tenancy                 = "default"
+  enable_dns_support               = "true"
+  enable_dns_hostnames             = "true"
 }
 
 resource "aws_internet_gateway" "internet_gateway" {
@@ -27,7 +28,9 @@ resource "aws_subnet" "public_subnet" {
   tags              = merge(var.tags, { Name = "${var.vpc_name}_public" })
   vpc_id            = aws_vpc.vpc.id
   availability_zone = var.availability_zone
-  cidr_block        = "10.0.0.0/24" /* Range: 10.0.0.0 - 10.0.0.255 Total: 256 */
+#  cidr_block        = "10.0.0.0/24" /* Range: 10.0.0.0 - 10.0.0.255 Total: 256 */
+  ipv6_native       = true
+  ipv6_cidr_block   = "::/124"
 }
 
 resource "aws_route_table_association" "public" {
@@ -39,5 +42,7 @@ resource "aws_subnet" "private_subnet" {
   tags              = merge(var.tags, { Name = "${var.vpc_name}_private" })
   vpc_id            = aws_vpc.vpc.id
   availability_zone = var.availability_zone
-  cidr_block        = "10.0.1.0/24" /* Range: 10.0.1.0 - 10.0.1.255 Total: 256 */
+#  cidr_block        = "10.0.1.0/24" /* Range: 10.0.1.0 - 10.0.1.255 Total: 256 */
+  ipv6_native       = true
+  ipv6_cidr_block   = "1000::/124"
 }
