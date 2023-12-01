@@ -36,7 +36,7 @@ resource "aws_subnet" "public_subnet" {
   availability_zone = var.availability_zone
   // TODO Remove once ensuring fully IP v6 subnet can work
   cidr_block        = "10.0.0.0/24" /* Range: 10.0.0.0 - 10.0.0.255 Total: 256 */
-  ipv6_native       = true
+#  ipv6_native       = true
   ipv6_cidr_block = cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, 1)
   assign_ipv6_address_on_creation = true
 }
@@ -53,6 +53,6 @@ resource "aws_subnet" "private_subnet" {
   // TODO Remove once ensuring fully IP v6 subnet can work
   cidr_block        = "10.0.1.0/24" /* Range: 10.0.1.0 - 10.0.1.255 Total: 256 */
 #  ipv6_native       = true
-  ipv6_cidr_block = cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, 1)
+  ipv6_cidr_block = cidrsubnet(aws_vpc.vpc.ipv6_cidr_block, 8, 2)
   assign_ipv6_address_on_creation = true
 }
