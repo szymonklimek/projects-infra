@@ -70,6 +70,7 @@ resource "aws_instance" "vpn_nat" {
   # NAT instance must be able to send and receive traffic when the source or destination is not itself
   # (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_NAT_Instance.html)
   source_dest_check           = false
+  ipv6_address_count = 1
 
   key_name               = aws_key_pair.ssh_key_pair.key_name
   vpc_security_group_ids = [aws_security_group.vpn_nat.id]

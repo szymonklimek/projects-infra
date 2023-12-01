@@ -12,13 +12,13 @@ resource "aws_security_group" "private" {
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
-#    cidr_blocks = [module.network.public_subnet.cidr_block]
+    cidr_blocks = [module.network.public_subnet.cidr_block]
     ipv6_cidr_blocks = [module.network.public_subnet.ipv6_cidr_block]
   }
 
   ingress {
     description = "Allow ping from public subnet"
-#    cidr_blocks = [module.network.public_subnet.cidr_block]
+    cidr_blocks = [module.network.public_subnet.cidr_block]
     ipv6_cidr_blocks = [module.network.public_subnet.ipv6_cidr_block]
     from_port   = 8
     to_port     = 0
@@ -42,6 +42,7 @@ resource "aws_instance" "private" {
   key_name               = aws_key_pair.ssh_key_pair.key_name
   private_ip             = local.private_server_ip
   vpc_security_group_ids = [aws_security_group.private.id]
+  ipv6_address_count = 1
 
   tags = merge(local.tags, { Name = "private" })
 }

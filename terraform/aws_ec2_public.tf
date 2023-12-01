@@ -55,6 +55,7 @@ resource "aws_instance" "public" {
   instance_type               = "t3.nano"
   subnet_id                   = module.network.public_subnet.id
   private_ip                  = local.public_server_ip
+  ipv6_address_count = 1
 
   key_name = aws_key_pair.ssh_key_pair.key_name
 
