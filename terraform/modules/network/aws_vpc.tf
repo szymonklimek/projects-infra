@@ -24,6 +24,12 @@ resource "aws_route" "public_internet" {
   destination_cidr_block = "0.0.0.0/0"
 }
 
+resource "aws_route" "public_internet_ipv6" {
+  gateway_id             = aws_internet_gateway.internet_gateway.id
+  route_table_id         = aws_route_table.public.id
+  destination_ipv6_cidr_block = "::/0"
+}
+
 resource "aws_subnet" "public_subnet" {
   tags              = merge(var.tags, { Name = "${var.vpc_name}_public" })
   vpc_id            = aws_vpc.vpc.id
