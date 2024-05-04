@@ -27,6 +27,9 @@ val observabilityDataPath = observabilityDirectoryPath + File.separator + "read_
 val otelCollectorDirectoryPath = observabilityDirectoryPath + File.separator + "otel_collector"
 val otelCollectorImageVersion = "1.0"
 val otelCollectorImageName = "otel-collector:$otelCollectorImageVersion"
+val nginxDirectoryPath = componentsDirectoryPath + File.separator + "nginx"
+val nginxImageVersion = "1.0"
+val nginxImageName = "nginx:$nginxImageVersion"
 
 // endregion
 
@@ -498,6 +501,42 @@ val downloadObservabilityData by tasks.registering {
                 "$host:/tmp/observability",
                 observabilityDataPath,
             )
+        }
+    }
+}
+
+// endregion
+
+// region Reverse proxy setup
+
+val buildNginxImage by tasks.registering {
+    group = "reverse proxy setup"
+    description = "Builds Nginx docker image"
+
+    doLast {
+        exec {
+            workingDir = File(nginxDirectoryPath)
+            commandLine("docker")
+            args("build", "-t", nginxImageName, ".")
+        }
+    }
+}
+
+val pushNginxImageToRegistry by tasks.registering {
+    group = "reverse proxy setup"
+    description = "Push Nginx docker image to container registry"
+
+    doLast {
+        val dockerRegistryUrl = File(privateInstanceDataFilePath).reader().readText() + ":5000"
+
+        val imageUrl = "$dockerRegistryUrl/$nginxImageName"
+        exec {
+            commandLine("docker")
+            args("tag", nginxImageName, imageUrl)
+        }
+        exec {
+            commandLine("docker")
+            args("push", imageUrl)
         }
     }
 }

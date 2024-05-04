@@ -1,0 +1,24 @@
+version: '3.9'
+
+services:
+
+  # Nginx - reverse proxy server
+  nginx:
+    container_name: nginx
+    image: "${CONTAINER_REGISTRY_URL}/nginx:1.0"
+    ports:
+      - "80:80"
+      - "443:443"
+    network_mode: host
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 60s
+      resources:
+        limits:
+          cpus: '0.05'
+          memory: 30M
+        reservations:
+          cpus: '0.01'
+          memory: 15M
