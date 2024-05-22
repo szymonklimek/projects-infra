@@ -11,3 +11,8 @@ services:
     environment:
       - EXPORT_ENDPOINT=${EXPORT_ENDPOINT}:4317
       - LOKI_ENDPOINT=${LOKI_HOST}/loki/api/v1/push
+    networks:
+      - components_network
+networks:
+  components_network:
+    external: true

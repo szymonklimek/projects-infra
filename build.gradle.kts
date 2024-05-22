@@ -1,16 +1,10 @@
-import groovy.json.JsonSlurper
 import org.apache.tools.ant.util.TeeOutputStream
 import java.io.ByteArrayOutputStream
 
 
 // region Paths, directories and file names
-
-val infrastructureDirectoryPath = rootDir.path + File.separator + "terraform"
-val infrastructureDataFilePath = buildDir.path + File.separator + "infrastructure_state.json"
+val serverUrl = gradle.extra.get("server.ip") ?: error("Missing remote server ip")
 val componentsDirectoryPath = rootDir.path + File.separator + "components"
-val vpnServerDataFilePath = buildDir.path + File.separator + "vpn_server_data"
-val privateInstanceDataFilePath = buildDir.path + File.separator + "private_instance_data"
-val publicInstanceDataFilePath = buildDir.path + File.separator + "public_instance_data"
 val openVpnDirectoryPath = componentsDirectoryPath + File.separator + "openvpn"
 val openVpnSetupDirectoryName = "openvpn_setup"
 val openVpnSetupFileDataPath = buildDir.path + File.separator + "openvpn_status"
@@ -26,82 +20,13 @@ val nginxImageName = "nginx:$nginxImageVersion"
 
 // endregion
 
-// region Infrastructure deployment
-
-val deployInfrastructure by tasks.registering {
-    group = "deployment"
-    description = "Deploy infrastructure with terraform. Changes are automatically applied"
-    outputs.file(infrastructureDataFilePath)
-
-    doLast {
-        exec {
-            workingDir = File(infrastructureDirectoryPath)
-            commandLine("terraform")
-            args("apply", "-auto-approve")
-        }
-        val stdOut = ByteArrayOutputStream()
-        exec {
-            workingDir = File(infrastructureDirectoryPath)
-            standardOutput = stdOut
-            commandLine("terraform")
-            args("show", "-json")
-        }
-        File(infrastructureDataFilePath)
-            .writer()
-            .use { it.write(stdOut.toString()) }
-    }
-}
-
-val destroyInfrastructure by tasks.registering {
-    group = "deployment"
-    description = "Destroy infrastructure with terraform. Changes are automatically applied"
-
-    doLast {
-        exec {
-            workingDir = File(infrastructureDirectoryPath)
-            commandLine("terraform")
-            args("apply", "-destroy", "-auto-approve")
-        }
-        delete(buildDir)
-    }
-}
-
-// endregion
-
 // region VPN
-
-val extractVpnServerUrl by tasks.registering {
-    group = "vpn"
-    description = "Extract VPN server public ip address"
-    inputs.files(deployInfrastructure.get().outputs.files)
-    outputs.file(vpnServerDataFilePath)
-
-    doLast {
-        val serverInfo =
-            (JsonSlurper()
-                .parseText(File(infrastructureDataFilePath).reader().readText()) as Map<*, *>)
-                .let { it["values"] as Map<*, *> }
-                .let { it["root_module"] as Map<*, *> }
-                .let { it["resources"] as List<*> }
-                .find { with(it as Map<*, *>) { this["type"] == "aws_eip" && this["name"] == "vpn_nat" } }
-                .let { it as Map<*, *> }
-                .let { it["values"] as Map<*, *> }
-        val publicUrl = serverInfo["public_ip"]
-
-        File(vpnServerDataFilePath)
-            .printWriter()
-            .use { it.print(publicUrl) }
-    }
-}
 
 val pushVpnSetup by tasks.registering {
     group = "vpn"
     description = "Set up OpenVPN server"
-    inputs.files(extractVpnServerUrl.get().outputs.files)
 
     doLast {
-        val host = File(vpnServerDataFilePath).reader().readText()
-
         // Push installation scripts onto the server
         exec {
             workingDir = File(openVpnDirectoryPath)
@@ -109,7 +34,7 @@ val pushVpnSetup by tasks.registering {
             args(
                 *sshArgs,
                 "-r", openVpnDirectoryPath + File.separator + openVpnSetupDirectoryName,
-                "$vpnServerUser@$host:~"
+                "$vpnServerUser@$serverUrl:~"
             )
         }
     }
@@ -118,14 +43,9 @@ val pushVpnSetup by tasks.registering {
 val setupVpnServer by tasks.registering {
     group = "vpn"
     description = "Set up OpenVPN server"
-    inputs.files(extractVpnServerUrl.get().outputs.files)
-    outputs.file(openVpnSetupFileDataPath)
-
     dependsOn(pushVpnSetup)
 
     doLast {
-        val host = File(vpnServerDataFilePath).reader().readText()
-
         // Execute installation scripts
         listOf(
             "install_packages.sh",
@@ -137,7 +57,7 @@ val setupVpnServer by tasks.registering {
                 commandLine("ssh")
                 args(
                     *sshArgs,
-                    "$vpnServerUser@$host",
+                    "$vpnServerUser@$serverUrl",
                     "sudo sh ~/$openVpnSetupDirectoryName/$script"
                 )
             }
@@ -148,7 +68,7 @@ val setupVpnServer by tasks.registering {
             commandLine("ssh")
             args(
                 *sshArgs,
-                "$vpnServerUser@$host",
+                "$vpnServerUser@$serverUrl",
                 "sudo systemctl start openvpn@server"
             )
         }
@@ -160,7 +80,7 @@ val setupVpnServer by tasks.registering {
             commandLine("ssh")
             args(
                 *sshArgs,
-                "$vpnServerUser@$host",
+                "$vpnServerUser@$serverUrl",
                 "sudo systemctl status openvpn@server"
             )
         }
@@ -177,15 +97,13 @@ val createVpnClient by tasks.registering {
     val openVpnClientCredentialsFilePath = buildDir.path + File.separator + clientName + ".ovpn"
 
     doLast {
-        val host = File(vpnServerDataFilePath).reader().readText()
-
         // Execute script
         exec {
             commandLine("ssh")
             args(
                 *sshArgs,
-                "$vpnServerUser@$host",
-                "sudo sh ~/$openVpnSetupDirectoryName/create_client.sh $clientName $host"
+                "$vpnServerUser@$serverUrl",
+                "sudo sh ~/$openVpnSetupDirectoryName/create_client.sh $clientName $serverUrl"
             )
         }
 
@@ -194,7 +112,7 @@ val createVpnClient by tasks.registering {
             commandLine("scp")
             args(
                 *sshArgs,
-                "$vpnServerUser@$host:/etc/openvpn/clients/$clientName.ovpn", openVpnClientCredentialsFilePath
+                "$vpnServerUser@$serverUrl:/etc/openvpn/clients/$clientName.ovpn", openVpnClientCredentialsFilePath
             )
         }
     }
@@ -204,63 +122,12 @@ val createVpnClient by tasks.registering {
 
 // region Instances setup
 
-val extractPublicInstanceUrl by tasks.registering {
+val installDocker by tasks.registering {
     group = "instances setup"
-    description = "Extract public instance ip address"
-    inputs.files(deployInfrastructure.get().outputs.files)
-    outputs.file(publicInstanceDataFilePath)
+    description = "Install docker on server"
 
     doLast {
-        val serverInfo =
-            (JsonSlurper()
-                .parseText(File(infrastructureDataFilePath).reader().readText()) as Map<*, *>)
-                .let { it["values"] as Map<*, *> }
-                .let { it["root_module"] as Map<*, *> }
-                .let { it["resources"] as List<*> }
-                .find { with(it as Map<*, *>) { this["type"] == "aws_instance" && this["name"] == "public" } }
-                .let { it as Map<*, *> }
-                .let { it["values"] as Map<*, *> }
-        val publicUrl = serverInfo["private_ip"]
-
-        File(publicInstanceDataFilePath)
-            .printWriter()
-            .use { it.print(publicUrl) }
-    }
-}
-
-val extractPrivateInstanceUrl by tasks.registering {
-    group = "instances setup"
-    description = "Extract private instance ip address"
-    inputs.files(deployInfrastructure.get().outputs.files)
-    outputs.file(privateInstanceDataFilePath)
-
-    doLast {
-        val serverInfo =
-            (JsonSlurper()
-                .parseText(File(infrastructureDataFilePath).reader().readText()) as Map<*, *>)
-                .let { it["values"] as Map<*, *> }
-                .let { it["root_module"] as Map<*, *> }
-                .let { it["resources"] as List<*> }
-                .find { with(it as Map<*, *>) { this["type"] == "aws_instance" && this["name"] == "private" } }
-                .let { it as Map<*, *> }
-                .let { it["values"] as Map<*, *> }
-        val publicUrl = serverInfo["private_ip"]
-
-        File(privateInstanceDataFilePath)
-            .printWriter()
-            .use { it.print(publicUrl) }
-    }
-}
-
-val installDockerPublicInstance by tasks.registering {
-    group = "instances setup"
-    description = "Install docker on public instance"
-    inputs.files(publicInstanceDataFilePath)
-
-    dependsOn(extractPublicInstanceUrl)
-
-    doLast {
-        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@$serverUrl"
         exec {
             // Push docker installation script to remote host
             commandLine("scp")
@@ -283,77 +150,12 @@ val installDockerPublicInstance by tasks.registering {
     }
 }
 
-val installDockerPrivateInstance by tasks.registering {
+val runPortainer by tasks.registering {
     group = "instances setup"
-    description = "Install docker on private instance"
-    inputs.files(privateInstanceDataFilePath)
-
-    dependsOn(extractPrivateInstanceUrl)
+    description = "Install portainer on server"
 
     doLast {
-        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
-        exec {
-            // Push docker installation script to remote host
-            commandLine("scp")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                "scripts${File.separator}install_docker.sh",
-                "$host:~"
-            )
-        }
-        exec {
-            // Execute docker installation script on remote host
-            commandLine("ssh")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                host, "sh ~/install_docker.sh"
-            )
-        }
-    }
-}
-
-val runPortainerPublicInstance by tasks.registering {
-    group = "instances setup"
-    description = "Install portainer on public instance"
-    inputs.files(publicInstanceDataFilePath)
-
-    dependsOn(extractPublicInstanceUrl)
-
-    doLast {
-        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
-        exec {
-            // Push docker installation script to remote host
-            commandLine("scp")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                "scripts${File.separator}run_portainer.sh",
-                "$host:~"
-            )
-        }
-        exec {
-            // Execute docker installation script on remote host
-            commandLine("ssh")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                host, "sh ~/run_portainer.sh"
-            )
-        }
-    }
-}
-
-val runPortainerPrivateInstance by tasks.registering {
-    group = "instances setup"
-    description = "Install portainer on private instance"
-    inputs.files(privateInstanceDataFilePath)
-
-    dependsOn(extractPrivateInstanceUrl)
-
-    doLast {
-        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@$serverUrl"
         exec {
             // Push docker installation script to remote host
             commandLine("scp")
@@ -379,21 +181,16 @@ val runPortainerPrivateInstance by tasks.registering {
 val containerRegistrySetup by tasks.registering {
     group = "instances setup"
     description = "Set up container registry"
-    inputs.files(privateInstanceDataFilePath)
-    inputs.files(publicInstanceDataFilePath)
-
-    dependsOn(extractPublicInstanceUrl)
 
     doLast {
-        val privateInstanceUrl = File(privateInstanceDataFilePath).reader().readText()
-        val host = "ubuntu@" + File(publicInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@$serverUrl"
         exec {
             // Execute docker installation script on remote host
             commandLine("ssh")
             args(
                 "-o", "StrictHostKeyChecking=no",
                 "-o", "UserKnownHostsFile=/dev/null",
-                host, "sudo sh -c \"echo '{\\\"insecure-registries\\\" : [\\\"http://$privateInstanceUrl:5000\\\"]}' > /etc/docker/daemon.json\""
+                host, "sudo sh -c \"echo '{\\\"insecure-registries\\\" : [\\\"http://127.0.0.1:5000\\\"]}' > /etc/docker/daemon.json\""
             )
         }
     }
@@ -418,11 +215,10 @@ val buildOtelCollectorImage by tasks.registering {
 
 val pushOtelCollectorImageToRegistry by tasks.registering {
     group = "observability setup"
-    description = "Push Open Telemetry Collector docker image to container registry run on private instance"
-    inputs.files(privateInstanceDataFilePath)
+    description = "Push Open Telemetry Collector docker image to container registry"
 
     doLast {
-        val dockerRegistryUrl = File(privateInstanceDataFilePath).reader().readText() + ":5000"
+        val dockerRegistryUrl = "$serverUrl:5000"
 
         val imageUrl = "$dockerRegistryUrl/$otelCollectorImageName"
         exec {
@@ -441,7 +237,7 @@ val fixDataPermissionsAndOwnership by tasks.registering {
     description = "Set up proper permissions and ownership of data"
 
     doLast {
-        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@$serverUrl"
         exec {
             // Set ownership of loki files to loki user (10001)
             // See: https://github.com/grafana/loki/blob/98551ceb9aca19f2914a96d9b3493b692456c1ce/cmd/loki/Dockerfile#L14-L18
@@ -483,7 +279,7 @@ val downloadObservabilityData by tasks.registering {
             )
         }
 
-        val host = "ubuntu@" + File(privateInstanceDataFilePath).reader().readText()
+        val host = "ubuntu@$serverUrl"
         exec {
             // Download observability data with preserving files modification times, access times and modes
             commandLine("scp")
@@ -520,7 +316,7 @@ val pushNginxImageToRegistry by tasks.registering {
     description = "Push Nginx docker image to container registry"
 
     doLast {
-        val dockerRegistryUrl = File(privateInstanceDataFilePath).reader().readText() + ":5000"
+        val dockerRegistryUrl = "$serverUrl:5000"
 
         val imageUrl = "$dockerRegistryUrl/$nginxImageName"
         exec {

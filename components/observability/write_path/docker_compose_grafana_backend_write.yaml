@@ -13,6 +13,8 @@ services:
     ]
     ports:
       - "3100:3100"
+    networks:
+      - components_network
     volumes:
       - /tmp/observability/loki-data/:/loki
     deploy:
@@ -23,11 +25,11 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: '0.02'
-          memory: 50M
+          cpus: '0.20'
+          memory: 250M
         reservations:
-          cpus: '0.01'
-          memory: 35M
+          cpus: '0.10'
+          memory: 135M
 
   # Grafana Tempo - tracing backend
   # https://grafana.com/oss/tempo/
@@ -47,6 +49,8 @@ services:
     ports:
       - "3200:3200"  # tempo
       - "4317:4317"  # otlp grpc
+    networks:
+      - components_network
     deploy:
       restart_policy:
         condition: on-failure
@@ -55,8 +59,12 @@ services:
         window: 120s
       resources:
         limits:
-          cpus: '0.02'
-          memory: 50M
+          cpus: '0.20'
+          memory: 250M
         reservations:
-          cpus: '0.01'
-          memory: 35M
+          cpus: '0.10'
+          memory: 135M
+
+networks:
+  components_network:
+    external: true
