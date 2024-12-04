@@ -10,7 +10,7 @@ services:
       - "4317:4317"
     environment:
       - EXPORT_ENDPOINT=${EXPORT_ENDPOINT}:4317
-      - LOKI_ENDPOINT=${LOKI_HOST}/loki/api/v1/push
+      - LOKI_ENDPOINT=${LOKI_HOST}
     networks:
       - components_network
 networks:

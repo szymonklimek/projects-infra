@@ -5,14 +5,6 @@ receivers:
 
 processors:
   batch:
-  attributes:
-    actions:
-      - action: insert
-        key: loki.attribute.labels
-        value: container
-      - action: insert
-        key: loki.format
-        value: raw
 
 exporters:
   logging:
@@ -21,8 +13,8 @@ exporters:
     endpoint: ${env:EXPORT_ENDPOINT}
     tls:
       insecure: true
-  loki:
-    endpoint: ${env:LOKI_ENDPOINT}
+  otlphttp:
+    endpoint: ${env:LOKI_ENDPOINT}/otlp
 
 service:
   pipelines:
@@ -32,8 +24,7 @@ service:
       exporters: [ otlp, logging ]
     logs:
       receivers: [ otlp ]
-      processors: [ attributes ]
-      exporters: [ loki, logging ]
+      exporters: [ otlphttp, logging ]
   telemetry:
     logs:
       level: debug

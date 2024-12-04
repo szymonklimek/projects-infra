@@ -19,7 +19,7 @@ services:
   # https://grafana.com/oss/loki/
   grafana-loki:
     container_name: grafana_loki
-    image: grafana/loki:2.8.6
+    image: grafana/loki:3.3.0
     command: [
       "-print-config-stderr",
       "-config.file=/etc/loki/local-config.yaml"
