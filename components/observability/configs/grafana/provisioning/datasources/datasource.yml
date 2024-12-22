@@ -6,9 +6,9 @@ datasources:
       type: tempo
       access: proxy
       orgId: 1
-      url: http://grafana-tempo:3200
+      url: http://grafana_tempo:3200
       basicAuth: false
-      isDefault: true
+      isDefault: false
       version: 1
       editable: false
       apiVersion: 1
@@ -21,9 +21,9 @@ datasources:
       uid: loki
       access: proxy
       orgId: 1
-      url: http://grafana-loki:3100
+      url: http://grafana_loki:3100
       basicAuth: false
-      isDefault: false
+      isDefault: true
       version: 1
       editable: false
       apiVersion: 1

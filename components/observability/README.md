@@ -19,34 +19,13 @@ Observability solution from this directory consists of:
 2. Setup for applications that writes logs and traces:
    1. Grafana Loki - logs
    2. Grafana Tempo - traces
-   3. The Docker compose deployment dedicated for machine with low resources (CPU, RAM)
-3. Setup for applications that queries logs and traces:
-   1. Grafana - web application with GUI allowing querying observability data easily
-   2. Grafana Loki and Tempo - necessary for performing queries
+   3. Grafana - web application with GUI allowing querying observability data easily and build dashboards
 
 ## Usage
 
 ### Initial deployment
 
-1. Build and deploy Open Telemetry Collector
-   1. Copy [config](otel_collector/otel-collector-config.yaml) to `/components/otel_collector` directory in public instance (host machine)
-   2. Deploy [Docker compose](./otel_collector/docker_compose_otel_collector.yaml) in public instance
-2. Deploy write path applications
-   1. Deploy [Docker compose](./write_path/docker_compose_grafana_backend_write.yaml) in private instance
-   2. Fix data permissions and ownership by `./gradlew fixDataPermissionsAndOwnership`
+1. Upload `configs` directory to `/components` directory of the host machine. 
+Make sure to give it proper access all files proper access.
+2. Deploy docker compose file
 
-After above steps, all observability signals sent to OTel collector should be processed and stored properly.
-This can be verified by inspecting collector, loki and tempo instances logs.
-
-### Accessing observability data (logs, traces)
-
-In order to access the data:
-1. Run `downloadObservabilityData` gradle task (`./gradlew downloadObservabilityData`)
-2. Change ownership of `loki-data`
-   1. *This is needed, since loki container operates as user `10001` and all files
-   2. Example for Ubuntu OS
-      1. Change directory to `read_path/data` 
-      2. Execute: `sudo chown 10001:10001 -R observability/loki-data`
-3. Deploy read path applications locally
-   1. Deploy [Docker compose](./read_path/docker_compose_grafana_backend_read.yaml) locally
-4. Access Grafana at `127.0.0.1:3000`

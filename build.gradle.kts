@@ -10,6 +10,7 @@ val openVpnSetupDirectoryName = "openvpn_setup"
 val openVpnSetupFileDataPath = buildDir.path + File.separator + "openvpn_status"
 val vpnServerUser = "ubuntu"
 val observabilityDirectoryPath = componentsDirectoryPath + File.separator + "observability"
+val observabilityConfigsPath = observabilityDirectoryPath + File.separator + "configs"
 val observabilityDataPath = observabilityDirectoryPath + File.separator + "read_path" + File.separator + "data"
 // endregion
 
@@ -186,6 +187,27 @@ val containerRegistrySetup by tasks.registering {
         }
     }
 }
+
+val uploadObservabilityConfigs by tasks.registering {
+    group = "observability operations"
+    description = "Upload configs for observability containers"
+
+
+    doLast {
+        val host = "ubuntu@$serverUrl"
+        exec {
+            commandLine("scp")
+            args(
+                "-prv",
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                observabilityConfigsPath,
+                "$host:/components/observability",
+            )
+        }
+    }
+}
+
 
 // region Observability operations
 
