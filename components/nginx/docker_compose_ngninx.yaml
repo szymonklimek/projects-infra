@@ -5,7 +5,7 @@ services:
   # Nginx - reverse proxy server
   nginx:
     container_name: nginx
-    image: "${CONTAINER_REGISTRY_URL}/nginx:1.0"
+    image: nginx:1.25.5
     ports:
       - "80:80"
       - "443:443"
@@ -22,3 +22,5 @@ services:
         reservations:
           cpus: '0.01'
           memory: 15M
+    volumes:
+      - /components/nginx:/etc/nginx

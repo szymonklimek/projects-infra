@@ -15,8 +15,7 @@ as the implementation of writing and reading observability signals (logs and tra
 
 Observability solution from this directory consists of:
 1. [Open Telemetry Collector](https://opentelemetry.io/docs/collector/) located in [otel_collector](./otel_collector)
-   1. Setup contains config and Dockerfile that builds custom image with configured collector
-   2. The collector could be deployed using Docker Compose and exposed to public
+   1. The collector could be deployed using Docker Compose and exposed to public
 2. Setup for applications that writes logs and traces:
    1. Grafana Loki - logs
    2. Grafana Tempo - traces
@@ -30,9 +29,8 @@ Observability solution from this directory consists of:
 ### Initial deployment
 
 1. Build and deploy Open Telemetry Collector
-   1. Build collector image by `./gradlew buildOtelCollectorImage`
-   2. Push Docker image to registry by `./gradlew pushOtelCollectorImageToRegistry`
-   3. Deploy [Docker compose](./otel_collector/docker_compose_otel_collector.yaml) in public instance
+   1. Copy [config](otel_collector/otel-collector-config.yaml) to `/components/otel_collector` directory in public instance (host machine)
+   2. Deploy [Docker compose](./otel_collector/docker_compose_otel_collector.yaml) in public instance
 2. Deploy write path applications
    1. Deploy [Docker compose](./write_path/docker_compose_grafana_backend_write.yaml) in private instance
    2. Fix data permissions and ownership by `./gradlew fixDataPermissionsAndOwnership`

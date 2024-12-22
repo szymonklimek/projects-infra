@@ -11,13 +11,6 @@ val openVpnSetupFileDataPath = buildDir.path + File.separator + "openvpn_status"
 val vpnServerUser = "ubuntu"
 val observabilityDirectoryPath = componentsDirectoryPath + File.separator + "observability"
 val observabilityDataPath = observabilityDirectoryPath + File.separator + "read_path" + File.separator + "data"
-val otelCollectorDirectoryPath = observabilityDirectoryPath + File.separator + "otel_collector"
-val otelCollectorImageVersion = "1.0"
-val otelCollectorImageName = "otel-collector:$otelCollectorImageVersion"
-val nginxDirectoryPath = componentsDirectoryPath + File.separator + "nginx"
-val nginxImageVersion = "1.0"
-val nginxImageName = "nginx:$nginxImageVersion"
-
 // endregion
 
 // region VPN
@@ -120,8 +113,6 @@ val createVpnClient by tasks.registering {
 
 // endregion
 
-// region Instances setup
-
 val installDocker by tasks.registering {
     group = "instances setup"
     description = "Install docker on server"
@@ -196,72 +187,6 @@ val containerRegistrySetup by tasks.registering {
     }
 }
 
-// endregion
-
-// region Observability setup
-
-val buildOtelCollectorImage by tasks.registering {
-    group = "observability setup"
-    description = "Builds Open Telemetry Collector docker image"
-
-    doLast {
-        exec {
-            workingDir = File(otelCollectorDirectoryPath)
-            commandLine("docker")
-            args("build", "-t", otelCollectorImageName, ".")
-        }
-    }
-}
-
-val pushOtelCollectorImageToRegistry by tasks.registering {
-    group = "observability setup"
-    description = "Push Open Telemetry Collector docker image to container registry"
-
-    doLast {
-        val dockerRegistryUrl = "$serverUrl:5000"
-
-        val imageUrl = "$dockerRegistryUrl/$otelCollectorImageName"
-        exec {
-            commandLine("docker")
-            args("tag", otelCollectorImageName, imageUrl)
-        }
-        exec {
-            commandLine("docker")
-            args("push", imageUrl)
-        }
-    }
-}
-
-val fixDataPermissionsAndOwnership by tasks.registering {
-    group = "observability setup"
-    description = "Set up proper permissions and ownership of data"
-
-    doLast {
-        val host = "ubuntu@$serverUrl"
-        exec {
-            // Set ownership of loki files to loki user (10001)
-            // See: https://github.com/grafana/loki/blob/98551ceb9aca19f2914a96d9b3493b692456c1ce/cmd/loki/Dockerfile#L14-L18
-            commandLine("ssh")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                host, "sudo chown -R 10001:10001 /tmp/observability/loki-data"
-            )
-        }
-        exec {
-            // Set permissions for files in observability so that they can be accessed later on
-            commandLine("ssh")
-            args(
-                "-o", "StrictHostKeyChecking=no",
-                "-o", "UserKnownHostsFile=/dev/null",
-                host, "sudo chmod -R 777 /tmp/observability"
-            )
-        }
-    }
-}
-
-// endregion
-
 // region Observability operations
 
 val downloadObservabilityData by tasks.registering {
@@ -290,42 +215,6 @@ val downloadObservabilityData by tasks.registering {
                 "$host:/tmp/observability",
                 observabilityDataPath,
             )
-        }
-    }
-}
-
-// endregion
-
-// region Reverse proxy setup
-
-val buildNginxImage by tasks.registering {
-    group = "reverse proxy setup"
-    description = "Builds Nginx docker image"
-
-    doLast {
-        exec {
-            workingDir = File(nginxDirectoryPath)
-            commandLine("docker")
-            args("build", "-t", nginxImageName, ".")
-        }
-    }
-}
-
-val pushNginxImageToRegistry by tasks.registering {
-    group = "reverse proxy setup"
-    description = "Push Nginx docker image to container registry"
-
-    doLast {
-        val dockerRegistryUrl = "$serverUrl:5000"
-
-        val imageUrl = "$dockerRegistryUrl/$nginxImageName"
-        exec {
-            commandLine("docker")
-            args("tag", nginxImageName, imageUrl)
-        }
-        exec {
-            commandLine("docker")
-            args("push", imageUrl)
         }
     }
 }

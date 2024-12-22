@@ -6,12 +6,7 @@ The directory contains setup of nginx - reverse proxy server.
 
 ### Initial deployment
 
-1. Create `nging.conf` file with desired setup. Default can be taken by running:
-```
-$ docker run --rm --entrypoint=cat nginx /etc/nginx/nginx.conf > components/nginx/nginx.conf
-```
+Create `nginx.conf` file with desired setup and place it in `/components/nginx` directory of the host
+machine. 
 
-2. Build and deploy Nginx image
-3. Build collector image by `./gradlew buildNginxImage`
-4. Push Docker image to registry by `./gradlew pushNginxImageToRegistry`
-5. Deploy [Docker compose](docker_compose_ngninx.yaml) in public instance
+Make sure to give it proper access all files proper access.
