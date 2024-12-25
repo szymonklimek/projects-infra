@@ -12,6 +12,7 @@ val vpnServerUser = "ubuntu"
 val observabilityDirectoryPath = componentsDirectoryPath + File.separator + "observability"
 val observabilityConfigsPath = observabilityDirectoryPath + File.separator + "configs"
 val observabilityDataPath = observabilityDirectoryPath + File.separator + "read_path" + File.separator + "data"
+val nginxConfigPath = componentsDirectoryPath + File.separator + "nginx" + File.separator + "config"
 // endregion
 
 // region VPN
@@ -183,6 +184,26 @@ val containerRegistrySetup by tasks.registering {
                 "-o", "StrictHostKeyChecking=no",
                 "-o", "UserKnownHostsFile=/dev/null",
                 host, "sudo sh -c \"echo '{\\\"insecure-registries\\\" : [\\\"http://127.0.0.1:5000\\\"]}' > /etc/docker/daemon.json\""
+            )
+        }
+    }
+}
+
+val uploadNginxConfig by tasks.registering {
+    group = "components config upload"
+    description = "Upload configs for nginx"
+
+
+    doLast {
+        val host = "ubuntu@$serverUrl"
+        exec {
+            commandLine("scp")
+            args(
+                "-prv",
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                nginxConfigPath,
+                "$host:/components/nginx",
             )
         }
     }
